@@ -1,0 +1,39 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: prometheus-operator
+    chart: prometheus-operator-8.5.3
+    heritage: Helm
+    release: prometheus
+  name: uimp-k8s.rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: uimp.rules
+      rules:
+        - expr: |-
+            sum(label_replace(kube_pod_labels{job="kube-state-metrics", label_app=~".+"}, "deployment", "$1", "label_app", "(.*)") * on(deployment, namespace) group_left(workload) label_replace(kube_deployment_labels{job="kube-state-metrics", label_app=~".+",  label_uimp="true"}, "workload", "$1", "label_app", "(.*)")) by (namespace, workload, pod)
+          labels:
+            workload_type: deployment
+          record: uimp_pod_workload
+        - expr: |-
+            sum(label_replace(kube_pod_labels{job="kube-state-metrics", label_app=~".+"}, "workload", "$1", "label_app", "(.*)") * on(workload, namespace) group_left label_replace(kube_daemonset_labels{job="kube-state-metrics", label_app=~".+",  label_uimp="true"}, "workload", "$1", "label_app", "(.*)")) by (namespace, workload, pod)
+          labels:
+            workload_type: daemonset
+          record: uimp_pod_workload
+        - expr: |-
+            sum(label_replace(kube_pod_labels{job="kube-state-metrics", label_app=~".+"}, "workload", "$1", "label_app", "(.*)") * on(workload, namespace) group_left label_replace(kube_statefulset_labels{job="kube-state-metrics", label_app=~".+",  label_uimp="true"}, "workload", "$1", "label_app", "(.*)")) by (namespace, workload, pod)
+          labels:
+            workload_type: statefulset
+          record: uimp_pod_workload
+        - expr: |-
+            sum(label_replace(kube_pod_labels{job="kube-state-metrics", label_app="",label_job_name=~".+"}, "workload", "$1", "label_job_name", "(.*)") * on(workload, namespace) group_left label_replace(kube_job_labels{job="kube-state-metrics", label_app="", label_job_name=~".+", label_uimp="true"}, "workload", "$1", "label_job_name", "(.*)")) by (namespace, workload, pod)
+          labels:
+            workload_type: job
+          record: uimp_pod_workload
+        - expr: |-
+            sum(label_replace(kube_pod_labels{job="kube-state-metrics", label_app=~".+",label_job_name=~".+"}, "workload", "$1", "label_app", "(.*)")  * on(workload, namespace) group_left label_replace(kube_cronjob_labels{job="kube-state-metrics", cronjob=~".+", label_uimp="true"}, "workload", "$1", "cronjob", "(.*)")) by (namespace, workload, pod)
+          labels:
+            workload_type: cronjob
+          record: uimp_pod_workload

@@ -1,0 +1,27 @@
+# 监控总的安装步骤
+
+# （1）安装helm
+https://helm.sh/docs/intro/install/
+
+文件包在 prometheus-monitor-deploy\src\file\helm
+helm文件，拷贝到linux虚拟机的 /usr/local/bin 目录下
+
+
+# （2）安装helm operator
+文件在  prometheus-monitor-deploy\src\file\helm-operator
+
+helm-operator 的镜像是修改过源码的，所以不能使用官方镜像
+
+helm install helm-op helm-operator -n kube-system
+
+
+#  (3) 安装prometheus operator
+文件在  prometheus-monitor-deploy\src\file\prometheus-operator
+安装步骤在  prometheus-monitor-deploy\src\step\helm 安装 prometheus
+
+
+
+# （4）运行rules文件
+文件在  prometheus-monitor-deploy\src\file\rules.yaml
+
+kubectl apply -f rules.yaml

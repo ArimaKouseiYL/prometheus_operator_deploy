@@ -1,0 +1,33 @@
+### 安装prometheus
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+
+helm pull stable/prometheus-operator --version 8.5.3
+tar zxvf prometheus-operator-8.5.3.tgz
+cd prometheus-operator/
+# 编辑values.yaml文件，设置ingress、镜像名称、retention等；注意：除了这个values.yaml文件，还要修改 /chart 目录下的values.yaml文件
+vim values.yaml
+
+#设置ingress为true，设置一个域名
+
+
+### 问题修复
+  controller-manager问题
+  端口不对10252改成10255
+  kubeControllerManager.service.port=10255
+  kubeControllerManager.service.targetPortt=10255
+  etcd 问题
+  原因是https问题，修改scheme为https，并设置insecureSkipVerify=true
+  kubeEtcd.serviceMonitor.scheme=https
+  kubeEtcd.serviceMonitor.insecureSkipVerify=true
+  kube-proxy问题
+  先查看kube-proxy绑定端口
+  netstat -ntlp | grep kube-proxy
+  如果绑定的地址是：127.0.0.1:10249，因绑定的是本机127的ip，外部无法访问到。
+  修改kube-proxy启动参数： —metrics-bind-address 0.0.0.0
+  kube-schedule问题
+  和第3个问题一样，如果绑定的地址是：127.0.0.1，需要修改为0.0.0.0
+
+  sed -e "s/- --address=127.0.0.1/- --address=0.0.0.0/" -i /etc/kubernetes/manifests/kube-scheduler.yaml
+  pvc名字超过63个字符问题
+  自己指定名字，如指定为pdb
